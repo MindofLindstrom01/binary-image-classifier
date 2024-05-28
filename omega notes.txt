@@ -1,0 +1,295 @@
+Import tensorflow as tf and import os, these are 2 key dependencies 
+
+Os is mainly used to navigate through file structures and returns an appropriate format according to the operating system being used 
+
+Getting data and removing weird images 
+
+Download the Download All Images extension and open it inside of an images tab on Google and it will download all images on the page into a zip file. Proceed to put those in your data folder and particular class. Do it again for the other class. Extract them into folders so they can be read. Go inside the folders and delete any images under 10kb for images that may be too small or weird files. 
+
+Need to remove images that are corrupted, have incorrect extensions 
+
+Import cv2 and imghdr, 2 dependencies 
+
+Open cv is a big computer vision model that allows you to do a ton of computer vision 
+
+Image hdr allows you to check the file extensions for the data images 
+
+Create a variable to hold path to data directory 
+
+Create a list of image extensions and store them in a variable 
+
+Looping through every folder in data directory 
+
+Loop through every folder and image in directory. 
+
+Cv2.imread opens each image as a numpy array 
+
+Img.shape shows how many pixels high and wide it is and how many channels 
+
+Open cv reads in images as BGR 
+
+If it is not a valid image and if it is not a valid image extension we remove the image with os.remove 
+
+Loading data 
+
+Tensorflow has a data set API, allows you to build data pipelines 
+
+Which allows you to scale out to much larger datasets, gives you repeatable steps to apply to your data 
+
+Gonna use a keras utility rather than directly from the API 
+
+Import numpy as np 
+
+From matplotlib import pyplot as plt 
+
+Line of code to load our data is data = tf.keras.utils.image_dataset_from_directory(‘data’) //building data pipeline 
+
+Keras has a helper method built in 
+
+Builds an image dataset for you on the fly 
+
+Don’t need to make the labels or classes, does it for you and does a bunch of preprocessing out of the box. 
+
+Resizes the images as well 
+
+Will batch images into a batch of 32 
+
+Will resize images 252x252 
+
+Will shuffle the images 
+
+Need to grab data on the fly to see it since it is not preloaded inside of memory 
+
+Easiest way to do that is to convert it into a numpy iterator first 
+
+Data_iterator = data.as_numpy_iterator() //allows access to data pipeline 
+
+Allows us to access the generator from the data pipeline 
+
+Get consecutive batches with batch = data_iterator.next() //actually accesses data pipeline 
+
+Data_iterator continously pulls batches of data back as a generator  
+
+If you type batch it will shows you a batch of data represented as a numpy arrays 
+
+Len(batch) will you give you 2 
+
+2 parts of the batch/dataset, the images and the labels 
+
+Batch[0].shape will give you the batch of images or instance and show the batch size of 32, size of 256x256 and 3 channels 
+
+Batch[1] will display a list of labels 0 or 1 for a predetermined labeled class for the images 
+
+First visualization plot block of code shows what label is assigned to what image for 0 and 1 
+
+Preprocessing data 
+
+Scale Data 
+
+Scaling the image values from 0 to 1 instead of 0 to 255 
+
+Helps deep learning model generalize faster and produce better results 
+
+Also gonna split up data into training testing and validation partitions to ensure we don’t overfit 
+
+Batch[0].min will be 0 and batch[0].max will be 255 before preprocessing and scaling 
+
+Want the values to be as low as possible for much more optimization 
+
+If you divide the batch by 255 batch[0]/255 you get a sclaed value between 0 and 1 
+
+Using the map function you can scale the data as you fetch it 
+
+Data = data.map(lambda x,y: (x/255, y)) 
+
+Map allows you to perform the transformation within the pipeline 
+
+Using lambda function to apply the transformation 
+
+X will be the images and y will be the target variable or labels 
+
+Will get our data (x) and divide it by 255 and perform no transformation on our Y 
+
+Then data.as_numpy_iterator().next() to give access to the next batch 
+
+Split Data 
+
+Making sure our model doesn’t overfit when validating our data so we have separate partitions 
+
+Check the batch size by typing len(data) which will give 7 batches in total with 32 images per batch. 
+
+Our training set is gonna be 70% of that data so roughly 4 batches 7 *.7 
+
+So training will be 4 batches, validation will be 2 batches, and testing will be 1 batch 
+
+Our training data will be what is actually used to train our deep learning model 
+
+Our validation data will be used to evaluate our data while we train the model not seen by training but helps fine tune the model 
+
+Test model will not be seen until at the final evaluation step, post training 
+
+Can use the .take and .skip methods availible inside of the tensorflow dataset pipeline 
+
+.take defines how much data or batches we will take inside of that partition 
+
+.skip will skip the batches for that partition 
+
+So we will take our train_size batches for the first partition 
+
+Then we will skip the train_size batches for validation partition and also take the validation partition batches 
+
+Then for the testing we will skip train and validation batches and only take the test_size batches for the testing partition 
+
+Building Deep Learning Model 
+
+Will build using the keras sequential API 
+
+Import dependencies from tensorflow 
+
+From tensorflow.keras.models import sequential 
+
+From tensorflow.keras.layers import conv2D, MaxPooling2d, Dense, Flatten, Dropout 
+
+Sequential API is optimal for single inputs and single outputs top-down data 
+
+Conv2d is a convolutional neural network layer 
+
+Maxpooling2d condenses the images down and finds the max value of each image and returns that 
+
+Dense is a fully connected layer 
+
+Flatten takes the channels from conv2d and reduces it back into a format that Dense can take and returns a single output 
+
+Dropout helps with regularization 
+
+Building a neural network is forming an architecture which is a bunch of layers which form a deep neural network 
+
+Make your model by doing Model = sequential() 
+
+Establishes an instance of the sequential class 
+
+Then stack all of the layers onto the model with the .add method 
+
+First layer of the model has to be an input layer and is the conv2d layer 
+
+Conv2d will have 16 filters, which is scanning and extracting relevant features from an image to make an output classification, filters will be 3x3 pixels in size, and have a stride of 1, which means it will move 1 pixel each time. We also pass the input shape of our images which will 256x256 pixels by 3 channels 
+
+We are applying a ‘relu’ activation function on the output gained from the conv2d and take any values below zero and make them 0 and preserve any positive values 
+
+Essentially we are taking all of the output from a layer and modifying what the output looks like, so any negative numbers can become positive and retain any other positive values. Another example is the sigmoid activation. 
+
+Then we add the max pooling layer which will take the maximum value from the relu activation layer and apply it, not just one number but over a set region, 2x2 region. 
+
+The filters will be the last channel for the flatten layer, the number of filters will be the channel value after it is condensed 
+
+Then we apply a condense layer which is a fully connected layer down to a single point with 256 neurons 
+
+Our final layer is a single dense layer with a single output between 0 and 1 because we are using the sigmoid activation function 
+
+Sigmoid function takes any output and converts it to a range between 0 and 1. 
+
+This value maps back to our zebra and tiger classes 
+
+Then we need to compile our model 
+
+Model.compile(‘adam’, loss=tf.losses.binaryCrossentropy(), metrics =['accuaracy’]) 
+
+We are using the adam optimizer 
+
+Our loss is binaryCrossentropy because we are doing a binary classification problem 
+
+Our metric is accuracy because it is telling us how well our model is classifying as 0 or 1 
+
+If we type model.summary() we can actually see how the model transforms our data 
+
+Because maxpooling is shaped 2x2 it is dividng 254/2 to get 127 
+
+Not a training model so there are no params there 
+
+Number of inputs determined by our flatten layer is 30*30*16 = 14400 which comes from the previosu layers elements 
+
+257 param if from a bias term, so weight of neurons in denselayer 256 plus bias term gives 257 
+
+Total params is 3 mill which is total number of values 
+
+Training 
+
+Going to fit our model 
+
+Hist = model.fit(train, epochs=20, validation_data=val) 
+
+2 really important methods when building a nerual network model.fit and model.predict 
+
+Fit is the training component and predict is when we make our predictions 
+
+Fit is going to take our training data which is 4 batches of 32 images each 
+
+Epochs (eeeepoks) is how long we are going to train for 
+
+1 epoch is 1 run over our entire trianing set of data 
+
+After training we will run evaluations on our validation data so we can see how well our model is performing in real time 
+
+Storing it in a history variable 
+
+If we run it, it will start training our model 
+
+You wanna see your loss go down and your accuracy go up 
+
+This is the loss on your training data and this is the accuracy on your training data 
+
+Also validation loss and accuracy 
+
+Evaluate Performance 
+
+Evaluating our model with metrics on our testing data 
+
+We will import from tensorflow precision, recall, and binary accuracy 
+
+You typically use these metrics for binary classification problems 
+
+In order to use them we must establish instances of them 
+
+Pre = precision(), re = recall(), acc=BinaryAccuracy() 
+
+We will loop through our testing batch data 
+
+For batch in test.as_numpy_iterator will bring back our batch 
+
+X is our set of images, and y is our y true value 
+
+Then we are passing through our image data to our model (x) 
+
+Then the predict function will return a set of values between 0 and 1 to our yhat since we are passing it through the sigmoid activation 
+
+In order to update our metrics we use the update_state method 
+
+We pass through our y true value and our predicted value 
+
+Then we can print out those results with print(pre.result(), re.result(), acc.result()) 
+
+A high value on all of those metrics means your model is performing better 
+
+All of these metrics are between 0 and 1 
+
+Testing 
+
+Testing on data that is outside of the batch 
+
+Read in an image that our model has never seen before 
+
+Save them in the working directory 
+
+Need to resize the image to 256x256 to test it 
+
+Then we pass it into our model with model.predict 
+
+Our neural network expects a batch of images not a single image 
+
+So we need to encapsulate it into another set of arrays or list using expand_dims 
+
+We are dividing the image by 255 to scale it 
+
+And the yhat will give us the final predicted value 
+
+If its below 0.5 its one case and vice versa 
